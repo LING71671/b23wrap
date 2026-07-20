@@ -23,7 +23,9 @@ jobs:
         run: |
           mkdir -p _site
           cp app/static/index.html app/static/style.css app/static/app.js _site/
-          # Optional: expose disclaimer as plain text page link target
+          cp app/static/favicon.ico app/static/favicon.png \
+             app/static/favicon-16.png app/static/favicon-32.png \
+             app/static/favicon-192.png app/static/favicon-512.png _site/ 2>/dev/null || true
           cp DISCLAIMER.md LICENSE README.md _site/ 2>/dev/null || true
       - uses: actions/upload-pages-artifact@v3
         with:

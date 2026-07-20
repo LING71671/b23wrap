@@ -52,14 +52,24 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             return self._file(STATIC / "index.html", "text/html; charset=utf-8")
         # Root-level static (same layout as GitHub Pages)
-        if path in ("/style.css", "/app.js"):
+        if path.lstrip("/") in {
+            "style.css",
+            "app.js",
+            "favicon.ico",
+            "favicon.png",
+            "favicon-16.png",
+            "favicon-32.png",
+            "favicon-192.png",
+            "favicon-512.png",
+        }:
             name = path.lstrip("/")
-            return self._file(
-                STATIC / name,
-                "text/css; charset=utf-8"
-                if name.endswith(".css")
-                else "application/javascript; charset=utf-8",
-            )
+            ctype = {
+                ".css": "text/css; charset=utf-8",
+                ".js": "application/javascript; charset=utf-8",
+                ".ico": "image/x-icon",
+                ".png": "image/png",
+            }.get(Path(name).suffix.lower(), "application/octet-stream")
+            return self._file(STATIC / name, ctype)
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
             fp = (STATIC / rel).resolve()
