@@ -58,14 +58,22 @@ cd b23wrap
 - Python **3.10+**
 - 可访问 `https://api.bilibili.com`
 
-### Web 工具箱
+### Web 工具箱（签发 b23 请用本机服务）
+
+> **GitHub Pages 纯静态页无法签发 b23**：浏览器跨域请求 B 站接口时，响应**没有** `Access-Control-Allow-Origin`，JS 读不到 JSON（且带 `github.io` Referer 时还可能被 WAF 403）。  
+> **差的就是「同源代理」**：`python app/server.py` 在本机代请求 B 站，前端只访问 `/api/generate`。
 
 ```bash
+# Windows 推荐双击
+start.bat
+
+# 或
 python app/server.py
-# Windows 也可: start.bat
 ```
 
-浏览器打开：<http://127.0.0.1:8765/>
+浏览器打开：**<http://127.0.0.1:8765/>**（不要用 file:// 打开 html）
+
+在线演示 Pages 仍可生成**包装长链**、切换 C1–C5；完整签发请本机运行。
 
 ### 命令行
 

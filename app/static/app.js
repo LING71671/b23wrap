@@ -2,6 +2,13 @@ const REPO_URL = "https://github.com/LING71671/b23wrap";
 const SHARE_API = "https://api.bilibili.com/x/share/click";
 const SHARE_API_BILIAPI = "https://api.biliapi.net/x/share/click";
 
+// Optional: set to your Cloudflare Worker / self-hosted proxy that forwards share/click
+// e.g. window.B23WRAP_MINT_PROXY = "https://xxx.workers.dev"
+const MINT_PROXY =
+  (typeof window !== "undefined" && window.B23WRAP_MINT_PROXY) ||
+  localStorage.getItem("b23wrap_mint_proxy") ||
+  "";
+
 const I18N = {
   zh: {
     navTool: "工具",
@@ -31,7 +38,10 @@ const I18N = {
     working: "生成中…",
     failed: "生成失败",
     done: "完成 · 请在 B 站 App 内打开短链",
-    doneLongOnly: "仅生成长链（签发未成功，见上方错误）",
+    backendOk: "本机服务已连接 · 可签发 b23",
+    backendNo:
+      "未连接本机服务：GitHub Pages 纯静态页无法代签 b23（B 站接口不返回 CORS）。请双击仓库里 start.bat，用 http://127.0.0.1:8765 打开。",
+    mintHint: "差的是「同源代理」：浏览器能发请求，但读不到 JSON；本机 server.py 负责代签。",
     langBtn: "EN",
   },
   en: {
@@ -62,13 +72,17 @@ const I18N = {
     working: "Working…",
     failed: "Failed",
     done: "Done · open b23 in Bilibili app",
-    doneLongOnly: "Long URL only (mint failed — see error)",
+    backendOk: "Local server connected · minting available",
+    backendNo:
+      "No local server: static GitHub Pages cannot mint b23 (no CORS on Bilibili API). Run start.bat and open http://127.0.0.1:8765",
+    mintHint: "Need same-origin proxy: browser cannot read Bilibili JSON. server.py mints for you.",
     langBtn: "中文",
   },
 };
 
 const $ = (id) => document.getElementById(id);
 let lang = localStorage.getItem("b23wrap_lang") || "zh";
+let localBackend = false;
 
 function t(key) {
   return (I18N[lang] && I18N[lang][key]) || I18N.zh[key] || key;
@@ -90,6 +104,7 @@ function applyI18n() {
   const langBtn = $("langBtn");
   if (langBtn) langBtn.textContent = t("langBtn");
   document.title = "b23wrap";
+  updateBackendBanner();
 }
 
 function setStatus(kind, text) {
@@ -97,6 +112,19 @@ function setStatus(kind, text) {
   statusEl.hidden = false;
   statusEl.className = `status ${kind}`;
   statusEl.textContent = text;
+}
+
+function updateBackendBanner() {
+  const el = $("backendBanner");
+  if (!el) return;
+  el.hidden = false;
+  if (localBackend) {
+    el.className = "backend-banner ok";
+    el.textContent = t("backendOk");
+  } else {
+    el.className = "backend-banner warn";
+    el.textContent = t("backendNo");
+  }
 }
 
 function uuid() {
@@ -123,7 +151,6 @@ function normalizeTarget(url) {
   return u.toString();
 }
 
-/** C1: mall/web → d. → jump */
 function buildJumpLongUrl(target) {
   target = normalizeTarget(target);
   const schema = "bilibili://mall/web?url=" + encodeURIComponent(target);
@@ -131,7 +158,6 @@ function buildJumpLongUrl(target) {
   return "https://mall.bilibili.com/jump.html?" + new URLSearchParams({ Url: dUrl }).toString();
 }
 
-/** Match app/core.py build_long_url */
 function buildLongUrl(target, chain) {
   const c = (chain || "c1").toLowerCase();
   if (c === "c4" || c === "nest2" || c === "double") {
@@ -145,13 +171,11 @@ function buildLongUrl(target, chain) {
 }
 
 function selectedChain() {
-  const el = $("chain");
-  return (el && el.value) || "c1";
+  return ($("chain") && $("chain").value) || "c1";
 }
 
 function chainLabel(chain) {
-  const map = { c1: "C1", c2: "C2", c3: "C3", c4: "C4", c5: "C5" };
-  return map[chain] || chain;
+  return ({ c1: "C1", c2: "C2", c3: "C3", c4: "C4", c5: "C5" })[chain] || chain;
 }
 
 function shareBody(longUrl) {
@@ -168,11 +192,8 @@ function shareBody(longUrl) {
   });
 }
 
-/**
- * Browser mint. Critical: referrerPolicy no-referrer
- * (Referer from github.io can trigger WAF 403.)
- */
 async function mintOnce(shareApi, longUrl) {
+  // referrerPolicy: github.io Referer triggers WAF 403
   const res = await fetch(shareApi, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -183,7 +204,7 @@ async function mintOnce(shareApi, longUrl) {
     cache: "no-store",
   });
   if (!res.ok) {
-    const snip = (await res.text().catch(() => "")).slice(0, 80);
+    const snip = (await res.text().catch(() => "")).slice(0, 60);
     throw new Error(`HTTP ${res.status} ${snip}`);
   }
   const payload = await res.json();
@@ -192,31 +213,52 @@ async function mintOnce(shareApi, longUrl) {
   }
   const content = (((payload.data || {}).content) || "").trim();
   const m = content.match(/https?:\/\/b23\.tv\/[A-Za-z0-9]+/);
-  if (!m) throw new Error("no b23 in content: " + JSON.stringify(payload).slice(0, 120));
-  return { short_url: m[0], share_api: shareApi, api_content: content };
+  if (!m) throw new Error("no b23: " + JSON.stringify(payload).slice(0, 100));
+  return { short_url: m[0], share_api: shareApi };
 }
 
-/** Try preferred host then fallback */
 async function mintB23Browser(longUrl, chain) {
   const preferred = chain === "c2" ? SHARE_API_BILIAPI : SHARE_API;
-  const hosts = preferred === SHARE_API_BILIAPI
-    ? [SHARE_API_BILIAPI, SHARE_API]
-    : [SHARE_API, SHARE_API_BILIAPI];
+  const hosts =
+    preferred === SHARE_API_BILIAPI
+      ? [SHARE_API_BILIAPI, SHARE_API]
+      : [SHARE_API, SHARE_API_BILIAPI];
   const errors = [];
   for (const api of hosts) {
     try {
       return await mintOnce(api, longUrl);
     } catch (e) {
-      errors.push(`${api.replace("https://", "")}: ${e.message || e}`);
+      errors.push((e && e.message) || String(e));
     }
   }
   throw new Error(errors.join(" | "));
 }
 
+/** Optional self-hosted / Worker proxy that returns {ok, short_url, ...} */
+async function mintViaProxy(url, chain, longUrl) {
+  if (!MINT_PROXY) throw new Error("no proxy");
+  const res = await fetch(MINT_PROXY.replace(/\/$/, "") + "/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      url,
+      chain,
+      api_host: chain === "c2" ? "biliapi" : "bilibili",
+      long_url: longUrl,
+    }),
+    mode: "cors",
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+  });
+  const data = await res.json();
+  if (!data.ok || !data.short_url) throw new Error(data.error || "proxy mint failed");
+  return data;
+}
+
 async function hasLocalBackend() {
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 700);
+    const timer = setTimeout(() => ctrl.abort(), 1500);
     const res = await fetch("/api/health", {
       signal: ctrl.signal,
       cache: "no-store",
@@ -243,19 +285,16 @@ async function generateViaLocalApi(url, chain) {
     cache: "no-store",
   });
   const ct = (res.headers.get("content-type") || "").toLowerCase();
-  if (!ct.includes("json")) {
-    throw new Error("local api returned non-json");
-  }
+  if (!ct.includes("json")) throw new Error("local api non-json (not running server.py?)");
   const data = await res.json();
   if (!res.ok || !data.ok) throw new Error(data.error || t("failed"));
   return data;
 }
 
 async function generate() {
-  const urlInput = $("url");
   const btn = $("btn");
   const resultEl = $("result");
-  const url = urlInput.value.trim();
+  const url = $("url").value.trim();
   const chain = selectedChain();
   if (!url) {
     setStatus("error", t("needUrl"));
@@ -268,71 +307,68 @@ async function generate() {
   const long_url = buildLongUrl(url, chain);
   const target = normalizeTarget(url);
   let data = null;
-  let mintError = "";
+  const errors = [];
 
-  try {
-    const local = await hasLocalBackend();
-    if (local) {
-      try {
-        data = await generateViaLocalApi(url, chain);
-      } catch (e) {
-        mintError = String(e.message || e);
-      }
+  // 1) Local Python server (reliable)
+  if (localBackend) {
+    try {
+      data = await generateViaLocalApi(url, chain);
+    } catch (e) {
+      errors.push("local: " + (e.message || e));
     }
-
-    // Browser / Pages: mint cross-origin (no-referrer)
-    if (!data || !data.short_url) {
-      try {
-        const minted = await mintB23Browser(long_url, chain);
-        data = {
-          ok: true,
-          target,
-          chain: chain === "c2" ? "c2" : chain,
-          long_url,
-          short_url: minted.short_url,
-          location: "",
-          share_api: minted.share_api,
-          api_content: minted.api_content,
-        };
-        mintError = "";
-      } catch (e) {
-        mintError = String(e.message || e);
-        if (!data) {
-          data = {
-            ok: true,
-            target,
-            chain,
-            long_url,
-            short_url: "",
-            location: "",
-          };
-        }
-      }
-    }
-
-    const outChain = data.chain || chain;
-    const apiNote = data.share_api
-      ? ` · ${String(data.share_api).replace(/^https:\/\//, "")}`
-      : "";
-    $("chainOut").textContent = chainLabel(outChain) + apiNote;
-    $("short").textContent = data.short_url || "—";
-    if (!data.short_url) $("short").removeAttribute("href");
-    else $("short").setAttribute("href", data.short_url);
-    $("long").textContent = data.long_url || long_url;
-    $("loc").textContent = data.location || "";
-    resultEl.hidden = false;
-
-    if (data.short_url) {
-      setStatus("ok", t("done"));
-    } else {
-      setStatus("error", `${t("failed")}: ${mintError || t("doneLongOnly")}`);
-      // still show long url as ok-ish secondary
-    }
-  } catch (e) {
-    setStatus("error", String(e.message || e));
-  } finally {
-    btn.disabled = false;
   }
+
+  // 2) Optional external mint proxy (Worker)
+  if ((!data || !data.short_url) && MINT_PROXY) {
+    try {
+      data = await mintViaProxy(url, chain, long_url);
+    } catch (e) {
+      errors.push("proxy: " + (e.message || e));
+    }
+  }
+
+  // 3) Direct browser → Bilibili (often blocked: no CORS ACAO)
+  if (!data || !data.short_url) {
+    try {
+      const minted = await mintB23Browser(long_url, chain);
+      data = {
+        ok: true,
+        target,
+        chain: chain === "c2" ? "c2" : chain,
+        long_url,
+        short_url: minted.short_url,
+        share_api: minted.share_api,
+        location: "",
+      };
+    } catch (e) {
+      errors.push("browser: " + (e.message || e));
+    }
+  }
+
+  if (!data) {
+    data = { ok: true, target, chain, long_url, short_url: "", location: "" };
+  }
+
+  $("chainOut").textContent =
+    chainLabel(data.chain || chain) +
+    (data.share_api ? " · " + String(data.share_api).replace(/^https:\/\//, "") : "");
+  $("short").textContent = data.short_url || "—";
+  if (data.short_url) $("short").setAttribute("href", data.short_url);
+  else $("short").removeAttribute("href");
+  $("long").textContent = data.long_url || long_url;
+  $("loc").textContent = data.location || "";
+  resultEl.hidden = false;
+
+  if (data.short_url) {
+    setStatus("ok", t("done"));
+  } else {
+    const tip = localBackend
+      ? errors.join("；")
+      : t("mintHint") + (errors.length ? " — " + errors.join("；") : "");
+    setStatus("error", t("failed") + "：" + tip);
+  }
+
+  btn.disabled = false;
 }
 
 function toggleLang() {
@@ -341,16 +377,9 @@ function toggleLang() {
   applyI18n();
 }
 
-$("btn").addEventListener("click", generate);
-$("url").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") generate();
-});
-$("langBtn").addEventListener("click", toggleLang);
-
 function setChain(value) {
   const v = value || "c1";
-  const hidden = $("chain");
-  if (hidden) hidden.value = v;
+  if ($("chain")) $("chain").value = v;
   localStorage.setItem("b23wrap_chain", v);
   document.querySelectorAll(".chain-tile").forEach((btn) => {
     const on = btn.getAttribute("data-chain") === v;
@@ -359,10 +388,20 @@ function setChain(value) {
   });
 }
 
-setChain(localStorage.getItem("b23wrap_chain") || "c1");
-document.querySelectorAll(".chain-tile").forEach((btn) => {
-  btn.addEventListener("click", () => setChain(btn.getAttribute("data-chain")));
+async function init() {
+  localBackend = await hasLocalBackend();
+  applyI18n();
+  setChain(localStorage.getItem("b23wrap_chain") || "c1");
+  document.querySelectorAll(".chain-tile").forEach((btn) => {
+    btn.addEventListener("click", () => setChain(btn.getAttribute("data-chain")));
+  });
+}
+
+$("btn").addEventListener("click", generate);
+$("url").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") generate();
 });
+$("langBtn").addEventListener("click", toggleLang);
 
 document.querySelectorAll("[data-copy]").forEach((el) => {
   el.addEventListener("click", async () => {
@@ -387,4 +426,4 @@ document.querySelectorAll('a[href*="github.com/LING71671/b23wrap"]').forEach((a)
   a.href = REPO_URL;
 });
 
-applyI18n();
+init();

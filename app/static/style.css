@@ -275,6 +275,26 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
   border-color: var(--ink);
 }
 
+.backend-banner {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  border: 1px solid var(--line);
+}
+
+.backend-banner.ok {
+  background: #eef7ee;
+  border-color: rgba(20, 120, 40, 0.25);
+  color: #145214;
+}
+
+.backend-banner.warn {
+  background: #fff6e8;
+  border-color: rgba(160, 100, 0, 0.28);
+  color: #6a4200;
+}
+
 .input-card button#btn {
   height: 44px;
   padding: 0 20px;
