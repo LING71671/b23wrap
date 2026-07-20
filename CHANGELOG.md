@@ -2,6 +2,19 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/) 风格。
 
+## [Unreleased]
+
+### Added
+
+- 文档：README / chains — App 已证实成功链路 **C1–C5** 与流程图
+- CLI / API：`--chain`（`c1`/`c2`/`c4`/`c5`）、`--api-host biliapi`
+- `build_long_url`：双层嵌套（C4）、jump 套 jump（C5）
+- Web UI / GitHub Pages：链路下拉选择 C1 / C2 / C4 / C5（与 core 对齐）
+
+### Changed
+
+- README 以 C1–C5 替代单一 L0 描述；默认行为仍为 C1
+
 ## [0.1.0] - 2026-07-20
 
 ### Added

@@ -97,7 +97,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(404, {"ok": False, "error": "not found"})
 
         try:
-            result = generate(body.get("url") or body.get("target") or "")
+            result = generate(
+                body.get("url") or body.get("target") or "",
+                chain=str(body.get("chain") or "c1"),
+                api_host=body.get("api_host") or None,
+            )
             self._json(200, result)
         except ValueError as e:
             self._json(400, {"ok": False, "error": str(e)})

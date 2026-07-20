@@ -1,21 +1,78 @@
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+*.egg
 *.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Virtual envs
 .venv/
 venv/
+ENV/
+env/
+
+# Env / secrets (never commit)
 .env
 .env.*
-.idea/
-.vscode/
-*.log
-.DS_Store
-Thumbs.db
+!.env.example
+*.pem
+*.key
+
+# Test / type / lint caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-dist/
-build/
-*.egg
+.pytype/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.cache/
+
+# --- IDE / editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.code-workspace
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Logs / temp ---
+*.log
+*.tmp
+*.temp
+*.bak
+tmp/
+temp/
+
+# --- Local overrides ---
+*.local
+local_settings.py
+
+# --- Probe dumps (regenerate: python report/run_valuable.py) ---
+# Keep report/**/products.md, README.md, SUMMARY.md
+report/**/results.json
+report/**/raw_results.jsonl
+report/batch_results.json

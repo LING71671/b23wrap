@@ -14,7 +14,19 @@ import urllib.parse
 import urllib.request
 import uuid
 
-SHARE_API = "https://api.bilibili.com/x/share/click"
+SHARE_API_DEFAULT = "https://api.bilibili.com/x/share/click"
+SHARE_API_BILIAPI = "https://api.biliapi.net/x/share/click"
+SHARE_API = SHARE_API_DEFAULT
+
+# Verified successful chains (App-confirmed); see docs/chains.md
+CHAIN_IDS = ("c1", "c2", "c4", "c5")
+# c3 ≡ c1 (explicit mall/web is the same builder)
+
+API_HOSTS = {
+    "bilibili": SHARE_API_DEFAULT,
+    "biliapi": SHARE_API_BILIAPI,
+}
+
 UA = (
     "Mozilla/5.0 BiliDroid/7.71.0 (bbcallen@gmail.com) "
     "os/android model/Pixel mobi_app/android build/7710300"
@@ -37,7 +49,7 @@ def normalize_target(url: str) -> str:
 
 def build_jump_long_url(target: str) -> str:
     """
-    Nest target into Bilibili mall jump / deep-link long URL.
+    C1/C3: Nest target into Bilibili mall jump / deep-link long URL.
 
     target
       -> bilibili://mall/web?url=<target>
@@ -50,11 +62,51 @@ def build_jump_long_url(target: str) -> str:
     return "https://mall.bilibili.com/jump.html?" + urllib.parse.urlencode({"Url": d_url})
 
 
-def mint_b23(long_url: str) -> dict:
+def build_long_url(target: str, chain: str = "c1") -> str:
+    """
+    Build stand-in long URL for a verified chain id.
+
+    chain:
+      c1 / c3 — standard triple wrap (default)
+      c4 / nest2 — C1(C1(T))
+      c5 / nest-jump — jump.html?Url=<C1(T)>
+    """
+    chain = (chain or "c1").strip().lower().replace("_", "-")
+    if chain in ("c1", "c3", "standard", "default"):
+        return build_jump_long_url(target)
+    if chain in ("c4", "nest2", "double"):
+        inner = build_jump_long_url(target)
+        return build_jump_long_url(inner)
+    if chain in ("c5", "nest-jump", "jump-jump"):
+        inner = build_jump_long_url(target)
+        return "https://mall.bilibili.com/jump.html?" + urllib.parse.urlencode(
+            {"Url": inner}
+        )
+    raise ValueError(
+        f"未知 chain={chain!r}，可选: c1, c3, c4/nest2, c5/nest-jump（见 docs/chains.md）"
+    )
+
+
+def resolve_share_api(api_host: str | None = None, api_url: str | None = None) -> str:
+    if api_url:
+        return api_url.strip()
+    key = (api_host or "bilibili").strip().lower()
+    if key not in API_HOSTS:
+        raise ValueError(f"未知 api_host={api_host!r}，可选: bilibili, biliapi")
+    return API_HOSTS[key]
+
+
+def mint_b23(
+    long_url: str,
+    *,
+    api_host: str | None = None,
+    api_url: str | None = None,
+) -> dict:
     """
     Mint official b23.tv via POST /x/share/click
     share_id=public.webview.0.0.pv, oid=<bilibili.com long URL>
     """
+    api = resolve_share_api(api_host, api_url)
     params = {
         "platform": "android",
         "share_channel": "COPY",
@@ -68,7 +120,7 @@ def mint_b23(long_url: str) -> dict:
     }
     data = urllib.parse.urlencode(params).encode()
     req = urllib.request.Request(
-        SHARE_API,
+        api,
         data=data,
         method="POST",
         headers={
@@ -107,6 +159,7 @@ def mint_b23(long_url: str) -> dict:
         "short_url": m.group(0),
         "api_content": content,
         "api_raw": payload,
+        "share_api": api,
     }
 
 
@@ -128,24 +181,48 @@ def resolve_b23(short_url: str) -> str | None:
         return None
 
 
-def generate(target: str) -> dict:
-    """Full pipeline: target URL -> long jump URL -> b23 -> Location probe."""
+def generate(
+    target: str,
+    *,
+    chain: str = "c1",
+    api_host: str | None = None,
+) -> dict:
+    """
+    Full pipeline: target URL -> long URL (chain) -> b23 -> Location probe.
+
+    chain: c1 (default), c4/nest2, c5/nest-jump
+    api_host: bilibili (default) or biliapi  → C2 when biliapi + c1
+    """
     target = normalize_target(target)
-    long_url = build_jump_long_url(target)
-    minted = mint_b23(long_url)
+    chain_n = (chain or "c1").strip().lower()
+    # C2 = C1 wrap + biliapi host
+    if chain_n in ("c2",):
+        chain_n = "c1"
+        api_host = api_host or "biliapi"
+    long_url = build_long_url(target, chain_n)
+    minted = mint_b23(long_url, api_host=api_host)
     location = resolve_b23(minted["short_url"])
+    chain_label = "c2" if (api_host or "bilibili") == "biliapi" and chain_n in (
+        "c1",
+        "c3",
+        "standard",
+        "default",
+    ) else chain_n
     return {
         "ok": True,
         "target": target,
+        "chain": chain_label,
         "long_url": long_url,
         "short_url": minted["short_url"],
         "location": location,
+        "share_api": minted.get("share_api"),
         "api_content": minted["api_content"],
         "note": (
             "b23 由 B 站短链服务签发。"
             "只有在 B 站 App 内打开短链，才可能跳转到目标网站；"
             "普通浏览器通常停在 d.bilibili.com 等中转页，不会进入目标站。"
             "App 内是否允许打开外站仍取决于客户端策略。"
+            "已验证链路见 docs/chains.md。"
         ),
         "open_in_bilibili_app_only": True,
         "lab_only": True,

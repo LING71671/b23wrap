@@ -73,6 +73,8 @@ python app/server.py
 python scripts/cli.py https://www.example.com
 python scripts/cli.py https://www.example.com --long-only   # 仅输出包装长链
 python scripts/cli.py https://www.example.com --json
+python scripts/cli.py https://www.example.com --chain c2      # 备用签发域名
+python scripts/cli.py https://www.example.com --chain nest2  # 双层嵌套 C4
 ```
 
 ### API
@@ -88,7 +90,7 @@ python -c "import urllib.request,json; print(urllib.request.urlopen(urllib.reque
 | 方法 | 路径 | 请求体 | 说明 |
 |---|---|---|---|
 | GET | `/api/health` | — | 服务状态 |
-| POST | `/api/generate` | `{"url":"https://..."}` | 返回 `short_url` / `long_url` 等 |
+| POST | `/api/generate` | `{"url":"https://..."}` 可选 `chain` / `api_host` | 返回 `short_url` / `long_url` / `chain` 等 |
 
 ---
 
@@ -97,13 +99,17 @@ python -c "import urllib.request,json; print(urllib.request.urlopen(urllib.reque
 ```text
 b23wrap/
 ├── app/
-│   ├── core.py           # 核心逻辑
+│   ├── core.py           # 核心逻辑（L0）
 │   ├── server.py         # 本地 HTTP 服务
 │   └── static/           # Web UI
 ├── scripts/
 │   └── cli.py            # 命令行入口
 ├── docs/
-│   └── mechanism.md      # 机制说明
+│   ├── chains.md         # 链路备份（主文在 README）
+│   ├── mechanism.md      # 机制摘要
+│   └── abuse-model.md    # 安全实验威胁模型
+├── needtest.md           # 实验清单
+├── report/               # 实验记录与 SUMMARY
 ├── LICENSE               # GPL-3.0
 ├── DISCLAIMER.md         # 免责声明（必读）
 ├── CONTRIBUTING.md
@@ -115,27 +121,193 @@ b23wrap/
 
 ---
 
-## 原理（摘要）
+## 已验证成功链路（App 终判）
 
-1. 目标 `T` → `bilibili://mall/web?url=T`
-2. 包入 `d.bilibili.com/?schema=...`
-3. 包入 `mall.bilibili.com/jump.html?Url=...`（站内域名）
-4. `POST https://api.bilibili.com/x/share/click`  
-   `share_id=public.webview.0.0.pv`，`oid=<长链>`
-5. 得到官方 `b23.tv` 短链
+以下链路均已在 **B 站 App** 内验证：打开生成的 `b23.tv` **可到达外站目标 T**（实验用过 `https://www.baidu.com`）。  
+浏览器打不开 **不算** 成功/失败依据。
 
-详见 [docs/mechanism.md](./docs/mechanism.md)。  
-接口说明可参考社区文档：[bilibili-API-collect · b23.tv](https://github.com/SocialSisterYi/bilibili-API-collect)（及 fork 中的 `b23tv.md`）。
+| ID | 说明 | CLI | App |
+|----|------|-----|-----|
+| **C1** | 标准三层：`mall/web` → `d.` → `jump` → 签发 | 默认 | ✅ |
+| **C2** | 同 C1，签发 host 换 `api.biliapi.net` | `--chain c2` | ✅ |
+| **C3** | 与 C1 同构（必杀 scheme = `mall/web`） | 同 C1 | ✅ |
+| **C4** | 双层嵌套 C1(C1(T)) | `--chain nest2` | ✅（可多一次站内跳） |
+| **C5** | 外层再 `jump?Url=` 包一层 C1 长链 | `--chain nest-jump` | ✅ |
+
+### 打开行为（C1–C5 共通）
+
+```mermaid
+flowchart TB
+  B[用户点击 b23.tv/xxx]
+  B --> R[302 → 站内长链]
+  R --> APP{打开环境}
+  APP -->|B 站 App| SCH[解析 jump / schema / mall/web]
+  SCH --> OUT[到达外站 T]
+  APP -->|系统浏览器等| STAY[常停中转页]
+  STAY --> X[通常到不了 T]
+```
+
+### 家族关系
+
+```mermaid
+flowchart TB
+  T[外站 T]
+  C1[C1 标准三层]
+  C2[C2 换签发 host]
+  C4[C4 双层]
+  C5[C5 jump 套 C1]
+  B[b23.tv]
+  APP[B 站 App]
+  OUT[到达 T]
+  T --> C1
+  C1 --> B
+  C1 --> C2 --> B
+  C1 --> C4 --> B
+  C1 --> C5 --> B
+  B --> APP --> OUT
+```
+
+---
+
+### C1 — 标准三层包装（默认）
+
+```mermaid
+flowchart LR
+  T["外站 T"]
+  S["bilibili://mall/web?url=T"]
+  D["d.bilibili.com/?schema=S"]
+  J["mall.bilibili.com/jump.html?Url=D"]
+  API["POST api.bilibili.com/x/share/click<br/>share_id=public.webview.0.0.pv<br/>oid=J"]
+  B["b23.tv/xxxxx"]
+  T --> S --> D --> J --> API --> B
+```
+
+```text
+T
+  → bilibili://mall/web?url=<T>
+  → https://d.bilibili.com/?schema=...
+  → https://mall.bilibili.com/jump.html?Url=...
+  → POST /x/share/click → https://b23.tv/...
+```
+
+```bash
+python scripts/cli.py https://www.example.com
+```
+
+---
+
+### C2 — 备用签发域名
+
+包装与 **C1 完全相同**，仅签发改为 `https://api.biliapi.net/x/share/click`。
+
+```mermaid
+flowchart LR
+  J["C1 长链 J"]
+  A1["api.bilibili.com/x/share/click"]
+  A2["api.biliapi.net/x/share/click"]
+  B["b23.tv"]
+  J --> A1 --> B
+  J --> A2 --> B
+```
+
+```bash
+python scripts/cli.py https://www.example.com --chain c2
+# 或
+python scripts/cli.py https://www.example.com --api-host biliapi
+```
+
+---
+
+### C3 — 必杀 scheme：`mall/web`
+
+实现与 **C1 相同**。App 实测对比：只有 `bilibili://mall/web?url=T` 能稳定到外站；`link` / `http` / `webview` 等会失败。
+
+```mermaid
+flowchart TB
+  subgraph ok [App 已证实]
+    MW["bilibili://mall/web?url=T"]
+  end
+  subgraph no [App 未形成有效落地]
+    L["bilibili://link?url=T"]
+    H["bilibili://http?url=T"]
+    V["bilibili://webview?url=T"]
+  end
+  MW --> APP[App 内到 T]
+  L --> FAIL[网页无法打开等]
+  H --> FAIL
+  V --> FAIL
+```
+
+---
+
+### C4 — 双层嵌套
+
+把 **整条 C1 长链** 再当作目标，再做一次 C1 包装后签发。App 可到 T，过程中**可能多跳一次 bilibili 站内页**。
+
+```mermaid
+flowchart LR
+  T[外站 T]
+  J1[C1 长链 J1]
+  J2[C1 再包装 J1 → J2]
+  API[share/click oid=J2]
+  B[b23.tv]
+  T --> J1 --> J2 --> API --> B
+```
+
+```mermaid
+flowchart TB
+  B[b23] --> APP[B 站 App]
+  APP --> MID[可能多一次站内跳]
+  MID --> OUT[仍到达 T]
+```
+
+```bash
+python scripts/cli.py https://www.example.com --chain nest2
+```
+
+---
+
+### C5 — jump 套 jump
+
+内层完整 C1，外层再包：`jump.html?Url=<C1长链>`，再签发。
+
+```mermaid
+flowchart LR
+  T[外站 T]
+  J1[C1 长链]
+  J2["jump.html?Url=J1"]
+  API[share/click oid=J2]
+  B[b23.tv]
+  T --> J1 --> J2 --> API --> B
+```
+
+```bash
+python scripts/cli.py https://www.example.com --chain nest-jump
+```
+
+---
+
+### 已证伪（不要用）
+
+| 形态 | 签发 | App |
+|------|------|-----|
+| `jump.html?Url=T` 裸外站（无 mall/web） | 可 | ❌ 空白页 |
+| `d.bilibili.com?schema=https://T` | 可 | ❌ 无跳转 |
+| `bilibili://link` / `http` / `webview` | 部分可 | ❌ / 不稳定 |
+| 外站直接当 `public.webview` 的 oid | 否 | — |
 
 ### 使用限制（技术）
 
 | 点 | 说明 |
 |---|---|
 | 短链真实性 | 由 B 站服务签发，非本工具伪造域名 |
-| **跳转场景** | **仅在 B 站 App（客户端）内打开时，才可能跳到指定网站** |
-| 普通浏览器 | 打开短链常停在 `d.bilibili.com` 等官方中转页，**不会**进目标站 |
-| 客户端策略 | App 是否允许打开外域 `url=` 取决于版本/风控，本工具无法保证 |
-| 接口变更 | 分享接口可能调整或失败 |
+| **跳转场景** | **仅在 B 站 App 内**打开短链才可能到目标站 |
+| 普通浏览器 | 通常到不了目标站 |
+| 客户端策略 | 版本/风控可能影响 |
+
+API：`POST /api/generate` 可带 `"chain":"c1"|"c2"|"c4"|"c5"`、`"api_host":"biliapi"`。  
+
+实验记录（可选）：[report/SUMMARY.md](./report/SUMMARY.md) · [docs/mechanism.md](./docs/mechanism.md)
 
 ---
 

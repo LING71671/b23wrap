@@ -31,11 +31,40 @@
     <div class="cards">
       <article class="card input-card">
         <h2 data-i18n="genTitle">生成</h2>
-        <p class="muted" data-i18n="genDesc">包装网址，签发官方 b23 短链。</p>
+        <p class="muted" data-i18n="genDesc">包装网址，签发官方 b23 短链。可选已验证链路 C1–C5。</p>
         <input id="url" type="url" data-i18n-placeholder="urlPh" placeholder="https://www.example.com" value="" />
+
+        <div class="chain-block">
+          <div class="field-label" data-i18n="chainLabel">链路（App 已验证）</div>
+          <div class="chain-pills" id="chainPills" role="radiogroup" aria-label="chain">
+            <button type="button" class="chain-pill is-active" data-chain="c1" role="radio" aria-checked="true">
+              <strong>C1</strong>
+              <span data-i18n="chainC1s">标准三层</span>
+            </button>
+            <button type="button" class="chain-pill" data-chain="c2" role="radio" aria-checked="false">
+              <strong>C2</strong>
+              <span data-i18n="chainC2s">备用域名</span>
+            </button>
+            <button type="button" class="chain-pill" data-chain="c4" role="radio" aria-checked="false">
+              <strong>C4</strong>
+              <span data-i18n="chainC4s">双层嵌套</span>
+            </button>
+            <button type="button" class="chain-pill" data-chain="c5" role="radio" aria-checked="false">
+              <strong>C5</strong>
+              <span data-i18n="chainC5s">jump 套 jump</span>
+            </button>
+          </div>
+          <input type="hidden" id="chain" value="c1" />
+          <p class="hint muted" data-i18n="chainHint">C1 默认；C2 换签发接口；C4/C5 多层包装。Pages 上可能仅能出长链（跨域）。</p>
+        </div>
+
         <button id="btn" type="button" data-i18n="genBtn">生成</button>
         <div id="status" class="status" hidden></div>
         <div id="result" class="result" hidden>
+          <div class="row">
+            <span class="lbl" data-i18n="lblChain">链路</span>
+            <code id="chainOut"></code>
+          </div>
           <div class="row">
             <span class="lbl" data-i18n="lblShort">短链</span>
             <a id="short" href="#" target="_blank" rel="noopener"></a>

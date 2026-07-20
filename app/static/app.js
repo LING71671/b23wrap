@@ -1,14 +1,22 @@
 const REPO_URL = "https://github.com/LING71671/b23wrap";
 const SHARE_API = "https://api.bilibili.com/x/share/click";
+const SHARE_API_BILIAPI = "https://api.biliapi.net/x/share/click";
 
 const I18N = {
   zh: {
     navTool: "工具",
     heroTitle: "网址 → b23.tv",
     genTitle: "生成",
-    genDesc: "包装网址，签发官方 b23 短链。",
+    genDesc: "包装网址，签发官方 b23 短链。可选已验证链路 C1–C5。",
     urlPh: "https://www.example.com",
+    chainLabel: "链路（App 已验证）",
+    chainHint: "C1 默认；C2 换签发接口；C4/C5 多层包装。Pages 上可能仅能出长链（跨域）。",
+    chainC1s: "标准三层",
+    chainC2s: "备用域名",
+    chainC4s: "双层嵌套",
+    chainC5s: "jump 套 jump",
     genBtn: "生成",
+    lblChain: "链路",
     lblShort: "短链",
     lblLong: "长链",
     copy: "复制",
@@ -30,9 +38,16 @@ const I18N = {
     navTool: "Tool",
     heroTitle: "URL → b23.tv",
     genTitle: "Generate",
-    genDesc: "Wrap a URL, mint official b23.",
+    genDesc: "Wrap a URL, mint official b23. Pick verified chain C1–C5.",
     urlPh: "https://www.example.com",
+    chainLabel: "Chain (App-verified)",
+    chainHint: "C1 default; C2 alt mint host; C4/C5 nested wrap. Pages may only get long URL (CORS).",
+    chainC1s: "Standard",
+    chainC2s: "Alt host",
+    chainC4s: "Double nest",
+    chainC5s: "jump-of-jump",
     genBtn: "Generate",
+    lblChain: "chain",
     lblShort: "b23",
     lblLong: "long",
     copy: "Copy",
@@ -108,6 +123,7 @@ function normalizeTarget(url) {
   return u.toString();
 }
 
+/** C1 standard: mall/web → d. → jump */
 function buildJumpLongUrl(target) {
   target = normalizeTarget(target);
   const schema = "bilibili://mall/web?url=" + encodeURIComponent(target);
@@ -115,7 +131,38 @@ function buildJumpLongUrl(target) {
   return "https://mall.bilibili.com/jump.html?" + new URLSearchParams({ Url: dUrl }).toString();
 }
 
-async function mintB23Browser(longUrl) {
+/**
+ * Match app/core.py build_long_url
+ * c1/c3 standard, c4 nest2, c5 nest-jump
+ */
+function buildLongUrl(target, chain) {
+  const c = (chain || "c1").toLowerCase();
+  if (c === "c4" || c === "nest2" || c === "double") {
+    return buildJumpLongUrl(buildJumpLongUrl(target));
+  }
+  if (c === "c5" || c === "nest-jump" || c === "jump-jump") {
+    const inner = buildJumpLongUrl(target);
+    return "https://mall.bilibili.com/jump.html?" + new URLSearchParams({ Url: inner }).toString();
+  }
+  // c1, c2 (wrap same), c3
+  return buildJumpLongUrl(target);
+}
+
+function selectedChain() {
+  const el = $("chain");
+  return (el && el.value) || "c1";
+}
+
+function resolveMintApi(chain) {
+  return chain === "c2" ? SHARE_API_BILIAPI : SHARE_API;
+}
+
+function chainLabel(chain) {
+  const map = { c1: "C1", c2: "C2", c3: "C3", c4: "C4", c5: "C5" };
+  return map[chain] || chain;
+}
+
+async function mintB23Browser(longUrl, shareApi) {
   const buvid = "XY" + uuid().replace(/-/g, "").slice(0, 30).toUpperCase();
   const body = new URLSearchParams({
     platform: "android",
@@ -128,7 +175,7 @@ async function mintB23Browser(longUrl) {
     share_session_id: uuid(),
     ts: String(Math.floor(Date.now() / 1000)),
   });
-  const res = await fetch(SHARE_API, {
+  const res = await fetch(shareApi || SHARE_API, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -140,14 +187,16 @@ async function mintB23Browser(longUrl) {
   const content = (((payload.data || {}).content) || "").trim();
   const m = content.match(/https?:\/\/b23\.tv\/[A-Za-z0-9]+/);
   if (!m) throw new Error(t("failed"));
-  return { short_url: m[0], location: null };
+  return { short_url: m[0], location: null, share_api: shareApi || SHARE_API };
 }
 
-async function generateViaLocalApi(url) {
+async function generateViaLocalApi(url, chain) {
+  const body = { url, chain };
+  if (chain === "c2") body.api_host = "biliapi";
   const res = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify(body),
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || t("failed"));
@@ -159,6 +208,7 @@ async function generate() {
   const btn = $("btn");
   const resultEl = $("result");
   const url = urlInput.value.trim();
+  const chain = selectedChain();
   if (!url) {
     setStatus("error", t("needUrl"));
     return;
@@ -170,25 +220,28 @@ async function generate() {
   try {
     let data;
     let longOnly = false;
-    // Prefer local Python API when available
     try {
-      data = await generateViaLocalApi(url);
+      data = await generateViaLocalApi(url, chain);
     } catch {
-      const long_url = buildJumpLongUrl(url);
+      const long_url = buildLongUrl(url, chain);
+      const shareApi = resolveMintApi(chain);
       try {
-        const minted = await mintB23Browser(long_url);
+        const minted = await mintB23Browser(long_url, shareApi);
         data = {
           ok: true,
           target: normalizeTarget(url),
+          chain: chain === "c2" ? "c2" : chain,
           long_url,
           short_url: minted.short_url,
           location: minted.location || "",
+          share_api: minted.share_api,
         };
       } catch {
         longOnly = true;
         data = {
           ok: true,
           target: normalizeTarget(url),
+          chain,
           long_url,
           short_url: "",
           location: "",
@@ -196,6 +249,8 @@ async function generate() {
       }
     }
 
+    const outChain = data.chain || chain;
+    $("chainOut").textContent = chainLabel(outChain) + (data.share_api ? ` · ${data.share_api.replace(/^https:\/\//, "")}` : "");
     $("short").textContent = data.short_url || "—";
     $("short").href = data.short_url || "#";
     if (!data.short_url) $("short").removeAttribute("href");
@@ -227,6 +282,25 @@ $("url").addEventListener("keydown", (e) => {
 });
 $("langBtn").addEventListener("click", toggleLang);
 
+// chain pills
+function setChain(value) {
+  const v = value || "c1";
+  const hidden = $("chain");
+  if (hidden) hidden.value = v;
+  localStorage.setItem("b23wrap_chain", v);
+  document.querySelectorAll(".chain-pill").forEach((btn) => {
+    const on = btn.getAttribute("data-chain") === v;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-checked", on ? "true" : "false");
+  });
+}
+
+const savedChain = localStorage.getItem("b23wrap_chain") || "c1";
+setChain(savedChain);
+document.querySelectorAll(".chain-pill").forEach((btn) => {
+  btn.addEventListener("click", () => setChain(btn.getAttribute("data-chain")));
+});
+
 document.querySelectorAll("[data-copy]").forEach((el) => {
   el.addEventListener("click", async () => {
     const node = $(el.getAttribute("data-copy"));
@@ -245,7 +319,6 @@ document.querySelectorAll("[data-copy]").forEach((el) => {
   });
 });
 
-// ensure github links
 document.querySelectorAll('a[href*="github.com/LING71671/b23wrap"]').forEach((a) => {
   a.href = REPO_URL;
 });
