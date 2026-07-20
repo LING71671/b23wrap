@@ -1,4 +1,4 @@
-# web2b-short
+# b23wrap
 
 本地工具：把 **任意 http(s) 网址** 包装成 B 站会员购 `jump.html` 长链，再调用官方分享接口签发真实 **`b23.tv`** 短链。
 
@@ -7,7 +7,7 @@
 ## 目录
 
 ```text
-web2b-short/
+b23wrap/
 ├── app/
 │   ├── core.py          # 长链包装 + /x/share/click 签发
 │   ├── server.py        # 本地 Web UI + API
@@ -29,7 +29,7 @@ web2b-short/
 ## 启动 Web
 
 ```powershell
-cd B:\web2b-short
+cd B:\b23wrap
 python app\server.py
 ```
 

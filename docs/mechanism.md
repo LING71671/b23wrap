@@ -7,7 +7,7 @@
 | A. 短链签发 | 任意 `*.bilibili.com` URL → `b23.tv` | `POST /x/share/click` |
 | B. 长链包装 | 站内 URL 内嵌目标网址 | `jump.html` + `bilibili://mall/web?url=` |
 
-web2b-short 同时做 A + B：先把目标 `T` 包进站内长链，再签发 b23。
+b23wrap 同时做 A + B：先把目标 `T` 包进站内长链，再签发 b23。
 
 ## 长链结构
 

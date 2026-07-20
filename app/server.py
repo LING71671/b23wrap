@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local web UI + API for web2b-short lab demo."""
+"""Local web UI + API for b23wrap lab demo."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from core import generate  # noqa: E402
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "web2b-short/1.0"
+    server_version = "b23wrap/1.0"
 
     def log_message(self, fmt: str, *args) -> None:  # noqa: A003
         print(f"[{self.log_date_time_string()}] {args[0] if args else fmt}")
@@ -58,7 +58,7 @@ class Handler(BaseHTTPRequestHandler):
             }.get(fp.suffix.lower(), "application/octet-stream")
             return self._file(fp, ctype)
         if path == "/api/health":
-            return self._json(200, {"ok": True, "service": "web2b-short"})
+            return self._json(200, {"ok": True, "service": "b23wrap"})
         return self._json(404, {"ok": False, "error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -92,13 +92,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="web2b-short local demo server")
+    ap = argparse.ArgumentParser(description="b23wrap local demo server")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
     args = ap.parse_args()
 
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"web2b-short: http://{args.host}:{args.port}/")
+    print(f"b23wrap: http://{args.host}:{args.port}/")
     print("Local research use only. Ctrl+C to stop.")
     try:
         httpd.serve_forever()
