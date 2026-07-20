@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>b23wrap</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <nav class="nav">
-    <a class="logo" href="/">b23wrap</a>
+    <a class="logo" href="./">b23wrap</a>
     <div class="nav-right">
       <a href="#tool" data-i18n="navTool">工具</a>
+      <a id="githubLink" class="nav-github" href="https://github.com/LING71671/b23wrap" target="_blank" rel="noopener">GitHub</a>
       <button type="button" id="langBtn" class="lang-btn" aria-label="language">EN</button>
     </div>
   </nav>
@@ -54,11 +55,18 @@
       <article class="card">
         <h2 data-i18n="disTitle">免责声明</h2>
         <p class="muted" data-i18n="disDesc">非 B 站官方产品。详见 DISCLAIMER.md。许可证 GPL-3.0。</p>
+        <p class="repo-line">
+          <a id="githubLink2" href="https://github.com/LING71671/b23wrap" target="_blank" rel="noopener">github.com/LING71671/b23wrap</a>
+        </p>
       </article>
     </div>
   </main>
 
-  <footer class="footer" data-i18n="footer">b23wrap · 本地 · 127.0.0.1:8765</footer>
-  <script src="/static/app.js"></script>
+  <footer class="footer">
+    <a href="https://github.com/LING71671/b23wrap" target="_blank" rel="noopener">GitHub</a>
+    <span class="dot">·</span>
+    <span data-i18n="footer">b23wrap · 本地 / Pages</span>
+  </footer>
+  <script src="app.js"></script>
 </body>
 </html>

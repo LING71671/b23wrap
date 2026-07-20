@@ -1,3 +1,6 @@
+const REPO_URL = "https://github.com/LING71671/b23wrap";
+const SHARE_API = "https://api.bilibili.com/x/share/click";
+
 const I18N = {
   zh: {
     navTool: "工具",
@@ -16,11 +19,12 @@ const I18N = {
     appDesc: "仅在 B 站 App 内打开短链，才可能跳到目标站；浏览器一般不会跳转。",
     disTitle: "免责声明",
     disDesc: "非 B 站官方产品。详见 DISCLAIMER.md。许可证 GPL-3.0。",
-    footer: "b23wrap · 本地 · 127.0.0.1:8765",
+    footer: "b23wrap · 本地 / Pages",
     needUrl: "请填写网址",
     working: "生成中…",
     failed: "生成失败",
     done: "完成 · 请在 B 站 App 内打开短链",
+    doneLongOnly: "已生成长链（浏览器跨域，未能签发 b23；请本地运行完整服务）",
     langBtn: "EN",
   },
   en: {
@@ -40,11 +44,12 @@ const I18N = {
     appDesc: "Target opens only inside Bilibili app. Browser stays on official pages.",
     disTitle: "Disclaimer",
     disDesc: "Not affiliated with Bilibili. See DISCLAIMER.md. GPL-3.0.",
-    footer: "b23wrap · local · 127.0.0.1:8765",
+    footer: "b23wrap · local / Pages",
     needUrl: "URL required",
     working: "Working…",
     failed: "Failed",
     done: "Done · open b23 in Bilibili app",
+    doneLongOnly: "Long URL ready (CORS blocked short mint; run local server for full b23)",
     langBtn: "中文",
   },
 };
@@ -66,7 +71,6 @@ function applyI18n() {
     const key = el.getAttribute("data-i18n-placeholder");
     if (key) el.setAttribute("placeholder", t(key));
   });
-  // copy buttons may have been changed to OK — reset labels
   document.querySelectorAll(".copy").forEach((el) => {
     el.textContent = t("copy");
   });
@@ -80,6 +84,76 @@ function setStatus(kind, text) {
   statusEl.hidden = false;
   statusEl.className = `status ${kind}`;
   statusEl.textContent = text;
+}
+
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function normalizeTarget(url) {
+  url = (url || "").trim();
+  if (!url) throw new Error(t("needUrl"));
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    throw new Error(t("needUrl"));
+  }
+  if (!u.hostname || !u.hostname.includes(".")) throw new Error(t("needUrl"));
+  if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error(t("needUrl"));
+  return u.toString();
+}
+
+function buildJumpLongUrl(target) {
+  target = normalizeTarget(target);
+  const schema = "bilibili://mall/web?url=" + encodeURIComponent(target);
+  const dUrl = "https://d.bilibili.com/?" + new URLSearchParams({ schema }).toString();
+  return "https://mall.bilibili.com/jump.html?" + new URLSearchParams({ Url: dUrl }).toString();
+}
+
+async function mintB23Browser(longUrl) {
+  const buvid = "XY" + uuid().replace(/-/g, "").slice(0, 30).toUpperCase();
+  const body = new URLSearchParams({
+    platform: "android",
+    share_channel: "COPY",
+    share_id: "public.webview.0.0.pv",
+    share_mode: "4",
+    oid: longUrl,
+    buvid,
+    build: "7710300",
+    share_session_id: uuid(),
+    ts: String(Math.floor(Date.now() / 1000)),
+  });
+  const res = await fetch(SHARE_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const payload = await res.json();
+  if (payload.code !== 0 && payload.code !== "0") {
+    throw new Error(`API ${payload.code}: ${payload.message || ""}`);
+  }
+  const content = (((payload.data || {}).content) || "").trim();
+  const m = content.match(/https?:\/\/b23\.tv\/[A-Za-z0-9]+/);
+  if (!m) throw new Error(t("failed"));
+  return { short_url: m[0], location: null };
+}
+
+async function generateViaLocalApi(url) {
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || t("failed"));
+  return data;
 }
 
 async function generate() {
@@ -96,24 +170,44 @@ async function generate() {
   setStatus("loading", t("working"));
 
   try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      setStatus("error", data.error || t("failed"));
-      return;
+    let data;
+    let longOnly = false;
+    // Prefer local Python API when available
+    try {
+      data = await generateViaLocalApi(url);
+    } catch {
+      const long_url = buildJumpLongUrl(url);
+      try {
+        const minted = await mintB23Browser(long_url);
+        data = {
+          ok: true,
+          target: normalizeTarget(url),
+          long_url,
+          short_url: minted.short_url,
+          location: minted.location || "",
+        };
+      } catch {
+        longOnly = true;
+        data = {
+          ok: true,
+          target: normalizeTarget(url),
+          long_url,
+          short_url: "",
+          location: "",
+        };
+      }
     }
-    $("short").textContent = data.short_url;
-    $("short").href = data.short_url;
+
+    $("short").textContent = data.short_url || "—";
+    $("short").href = data.short_url || "#";
+    if (!data.short_url) $("short").removeAttribute("href");
+    else $("short").setAttribute("href", data.short_url);
     $("long").textContent = data.long_url;
     $("loc").textContent = data.location || "";
     resultEl.hidden = false;
-    setStatus("ok", t("done"));
+    setStatus("ok", longOnly || !data.short_url ? t("doneLongOnly") : t("done"));
   } catch (e) {
-    setStatus("error", String(e));
+    setStatus("error", String(e.message || e));
   } finally {
     btn.disabled = false;
   }
@@ -123,7 +217,6 @@ function toggleLang() {
   lang = lang === "zh" ? "en" : "zh";
   localStorage.setItem("b23wrap_lang", lang);
   applyI18n();
-  // clear status when switching language
   const statusEl = $("status");
   if (statusEl && !statusEl.hidden && statusEl.classList.contains("ok")) {
     statusEl.textContent = t("done");
@@ -139,7 +232,10 @@ $("langBtn").addEventListener("click", toggleLang);
 document.querySelectorAll("[data-copy]").forEach((el) => {
   el.addEventListener("click", async () => {
     const node = $(el.getAttribute("data-copy"));
-    const text = node.href && node.tagName === "A" ? node.href : node.textContent;
+    const text = node.href && node.tagName === "A" && node.getAttribute("href") !== "#"
+      ? node.href
+      : node.textContent;
+    if (!text || text === "—") return;
     try {
       await navigator.clipboard.writeText(text);
       el.textContent = t("copyOk");
@@ -149,6 +245,11 @@ document.querySelectorAll("[data-copy]").forEach((el) => {
       setTimeout(() => (el.textContent = t("copy")), 900);
     }
   });
+});
+
+// ensure github links
+document.querySelectorAll('a[href*="github.com/LING71671/b23wrap"]').forEach((a) => {
+  a.href = REPO_URL;
 });
 
 applyI18n();

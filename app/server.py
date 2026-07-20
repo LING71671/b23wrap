@@ -51,6 +51,15 @@ class Handler(BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         if path in ("/", "/index.html"):
             return self._file(STATIC / "index.html", "text/html; charset=utf-8")
+        # Root-level static (same layout as GitHub Pages)
+        if path in ("/style.css", "/app.js"):
+            name = path.lstrip("/")
+            return self._file(
+                STATIC / name,
+                "text/css; charset=utf-8"
+                if name.endswith(".css")
+                else "application/javascript; charset=utf-8",
+            )
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
             fp = (STATIC / rel).resolve()
