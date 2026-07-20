@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
 .idea/
 .vscode/
 *.log
@@ -12,5 +13,9 @@ venv/
 Thumbs.db
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 dist/
 build/
+*.egg
+.coverage
+htmlcov/

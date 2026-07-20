@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Syntax check
+        run: |
+          python -m py_compile app/core.py app/server.py scripts/cli.py
+      - name: Long-only CLI (no network to bilibili required for this step)
+        run: |
+          python scripts/cli.py https://www.example.com --long-only | grep -q 'mall.bilibili.com/jump.html'

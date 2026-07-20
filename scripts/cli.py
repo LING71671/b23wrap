@@ -46,6 +46,10 @@ def main() -> int:
         print("long   :", result["long_url"])
         print("b23    :", result["short_url"])
         print("loc    :", result.get("location") or "")
+        print(
+            "note   : 请在 B 站 App 内打开短链才会跳到目标站；"
+            "普通浏览器通常不会跳转。"
+        )
     return 0
 
 

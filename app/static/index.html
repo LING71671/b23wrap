@@ -3,21 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>b23wrap · 实验室 Demo</title>
+  <title>b23wrap · 工具箱</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="wrap">
     <header>
-      <p class="brand">b23wrap</p>
+      <p class="brand">b23wrap toolbox</p>
       <h1>任意网址 → 官方 b23.tv</h1>
       <p class="sub">
-        包装为会员购 <code>jump.html</code> 长链，再调用 B 站
+        开源本地工具箱：包装为会员购 <code>jump.html</code> 长链，再调用 B 站
         <code>/x/share/click</code> 签发真实短链。
       </p>
       <div class="banner">
-        <strong>仅限本地研究与机制验证。</strong>
-        请遵守法律与平台规则。桌面浏览器打开 b23 常停在官方中转页；真机 B 站 App 行为取决于客户端策略。
+        <strong>使用前请阅读仓库 DISCLAIMER.md。</strong>
+        非 B 站官方产品。请遵守法律与平台规则。
+      </div>
+      <div class="banner banner-info">
+        <strong>跳转说明：</strong>
+        生成的 <code>b23.tv</code> <strong>只有在 B 站 App 里面点开</strong>，才可能跳到你填的网站。
+        用系统浏览器 / 电脑 Chrome 打开，一般只会停在官方中转页（如 <code>d.bilibili.com</code>），<strong>不会</strong>自动进入目标站。
       </div>
     </header>
 
@@ -27,7 +32,7 @@
         <input id="url" type="url" placeholder="例如 https://www.baidu.com" value="https://www.baidu.com" />
         <button id="btn" type="button">生成 b23</button>
       </div>
-      <p class="hint">自动补全 https://。短链由 B 站官方服务签发，非本站伪造。</p>
+      <p class="hint">自动补全 https://。短链由 B 站官方服务签发。请在 <strong>B 站客户端内</strong>打开短链以测试跳转。</p>
 
       <div id="status" class="status" hidden></div>
 
@@ -63,10 +68,11 @@
         <li><code>mall.bilibili.com/jump.html?Url=...</code></li>
         <li><code>POST /x/share/click</code> · <code>public.webview.0.0.pv</code></li>
         <li>官方 <code>b23.tv/xxxxx</code></li>
+        <li><strong>在 B 站 App 内打开</strong>短链 → 才可能到达 <code>T</code></li>
       </ol>
     </section>
 
-    <footer>b23wrap · <code>127.0.0.1:8765</code> · lab only</footer>
+    <footer>b23wrap · MIT · <code>127.0.0.1:8765</code> · 见 DISCLAIMER.md</footer>
   </div>
   <script src="/static/app.js"></script>
 </body>

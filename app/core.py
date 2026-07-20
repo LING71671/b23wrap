@@ -139,8 +139,10 @@ def generate(target: str) -> dict:
         "api_content": minted["api_content"],
         "note": (
             "b23 由 B 站短链服务签发。"
-            "桌面浏览器常停在 d.bilibili.com；"
-            "真机 B 站 App 是否打开目标页取决于客户端策略。"
+            "只有在 B 站 App 内打开短链，才可能跳转到目标网站；"
+            "普通浏览器通常停在 d.bilibili.com 等中转页，不会进入目标站。"
+            "App 内是否允许打开外站仍取决于客户端策略。"
         ),
+        "open_in_bilibili_app_only": True,
         "lab_only": True,
     }

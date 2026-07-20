@@ -39,7 +39,10 @@ async function generate() {
     $("loc").textContent = data.location || "(未取到 Location)";
     $("note").textContent = data.note || "";
     resultEl.hidden = false;
-    setStatus("ok", "生成成功：已拿到官方 b23 短链");
+    setStatus(
+      "ok",
+      "生成成功。请在 B 站 App 内打开短链才会跳到目标站；浏览器里一般不会跳转。"
+    );
   } catch (e) {
     setStatus("error", "请求失败：" + e);
   } finally {
