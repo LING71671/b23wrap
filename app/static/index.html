@@ -10,56 +10,55 @@
   <nav class="nav">
     <a class="logo" href="/">b23wrap</a>
     <div class="nav-right">
-      <a href="#tool">Tool</a>
-      <a href="https://github.com/" id="repo" hidden>GitHub</a>
-      <span class="lang">GPL-3.0</span>
+      <a href="#tool" data-i18n="navTool">工具</a>
+      <button type="button" id="langBtn" class="lang-btn" aria-label="language">EN</button>
     </div>
   </nav>
 
   <section class="hero">
     <div class="watermark" aria-hidden="true"></div>
     <div class="hero-content">
-      <h1>URL → b23.tv</h1>
-      <p class="tag">ABOUT</p>
+      <h1 data-i18n="heroTitle">网址 → b23.tv</h1>
+      <p class="tag" data-i18n="heroTag">简介</p>
     </div>
   </section>
 
   <main class="main" id="tool">
     <div class="cards">
       <article class="card input-card">
-        <h2>Generate</h2>
-        <p class="muted">Wrap a URL, mint official b23.</p>
-        <input id="url" type="url" placeholder="https://www.example.com" value="https://www.baidu.com" />
-        <button id="btn" type="button">Generate</button>
+        <h2 data-i18n="genTitle">生成</h2>
+        <p class="muted" data-i18n="genDesc">包装网址，签发官方 b23 短链。</p>
+        <input id="url" type="url" data-i18n-placeholder="urlPh" placeholder="https://www.example.com" value="https://www.baidu.com" />
+        <button id="btn" type="button" data-i18n="genBtn">生成</button>
         <div id="status" class="status" hidden></div>
         <div id="result" class="result" hidden>
           <div class="row">
-            <span class="lbl">b23</span>
+            <span class="lbl" data-i18n="lblShort">短链</span>
             <a id="short" href="#" target="_blank" rel="noopener"></a>
-            <button type="button" class="copy" data-copy="short">Copy</button>
+            <button type="button" class="copy" data-copy="short" data-i18n="copy">复制</button>
           </div>
           <div class="row">
-            <span class="lbl">long</span>
+            <span class="lbl" data-i18n="lblLong">长链</span>
             <code id="long"></code>
-            <button type="button" class="copy" data-copy="long">Copy</button>
+            <button type="button" class="copy" data-copy="long" data-i18n="copy">复制</button>
           </div>
           <code id="loc" class="loc"></code>
         </div>
       </article>
 
       <article class="card">
-        <h2>Open in App</h2>
-        <p class="muted">Target opens only inside Bilibili app. Browser stays on official pages.</p>
+        <h2 data-i18n="appTitle">在 App 内打开</h2>
+        <p class="muted" data-i18n="appDesc">仅在 B 站 App 内打开短链，才可能跳到目标站；浏览器一般不会跳转。</p>
       </article>
 
       <article class="card">
-        <h2>Disclaimer</h2>
-        <p class="muted">Not affiliated with Bilibili. See DISCLAIMER.md. GPL-3.0.</p>
+        <h2 data-i18n="disTitle">免责声明</h2>
+        <p class="muted" data-i18n="disDesc">非 B 站官方产品。详见 DISCLAIMER.md。许可证 GPL-3.0。</p>
       </article>
     </div>
   </main>
 
-  <footer class="footer">b23wrap · local · 127.0.0.1:8765</footer>
+  <footer class="footer" data-i18n="footer">b23wrap · 本地 · 127.0.0.1:8765</footer>
   <script src="/static/app.js"></script>
 </body>
 </html>
