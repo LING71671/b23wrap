@@ -1,4 +1,8 @@
-"""Core: wrap external URL + mint official b23.tv via Bilibili share API."""
+"""Core: wrap external URL + mint official b23.tv via Bilibili share API.
+
+Copyright (C) 2026 b23wrap contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
 
 from __future__ import annotations
 

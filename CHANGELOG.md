@@ -10,8 +10,10 @@
 - 核心：调用 `POST /x/share/click` 签发官方 `b23.tv`
 - 本地 Web UI + `/api/generate` / `/api/health`
 - CLI：`scripts/cli.py`
-- 文档：机制说明、MIT 许可、完整免责声明
+- 文档：机制说明、GPL-3.0 许可、完整免责声明
 - 开源准备：CONTRIBUTING、SECURITY、CHANGELOG
 - 明确说明：**仅在 B 站 App 内打开短链才可能跳到目标站**
+- 前端：MIMO 风格浅色产品页 UI
+- 许可证：GNU GPL v3
 
 [0.1.0]: https://github.com/example/b23wrap/releases/tag/v0.1.0

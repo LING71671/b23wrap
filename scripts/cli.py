@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""CLI: python scripts/cli.py https://www.baidu.com"""
+"""CLI: python scripts/cli.py https://www.example.com
+
+Copyright (C) 2026 b23wrap contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
 
 from __future__ import annotations
 

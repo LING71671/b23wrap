@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Local web UI + API for b23wrap lab demo."""
+"""Local web UI + API for b23wrap toolbox.
+
+Copyright (C) 2026 b23wrap contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
 
 from __future__ import annotations
 

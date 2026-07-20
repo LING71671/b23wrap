@@ -4,76 +4,126 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>b23wrap · 工具箱</title>
+  <meta name="description" content="将任意网址包装为 B 站 jump 长链并签发官方 b23.tv 短链。本地开源工具箱。" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <p class="brand">b23wrap toolbox</p>
-      <h1>任意网址 → 官方 b23.tv</h1>
-      <p class="sub">
-        开源本地工具箱：包装为会员购 <code>jump.html</code> 长链，再调用 B 站
-        <code>/x/share/click</code> 签发真实短链。
-      </p>
-      <div class="banner">
-        <strong>使用前请阅读仓库 DISCLAIMER.md。</strong>
-        非 B 站官方产品。请遵守法律与平台规则。
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="/">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span class="logo-text">b23wrap</span>
+      </a>
+      <div class="nav-right">
+        <a class="nav-link" href="#how">原理</a>
+        <a class="nav-link" href="#notice">说明</a>
+        <a class="nav-link ghost" href="/static/../" hidden></a>
+        <span class="nav-pill">GPL-3.0</span>
       </div>
-      <div class="banner banner-info">
-        <strong>跳转说明：</strong>
-        生成的 <code>b23.tv</code> <strong>只有在 B 站 App 里面点开</strong>，才可能跳到你填的网站。
-        用系统浏览器 / 电脑 Chrome 打开，一般只会停在官方中转页（如 <code>d.bilibili.com</code>），<strong>不会</strong>自动进入目标站。
-      </div>
-    </header>
+    </div>
+  </nav>
 
-    <main class="card">
-      <label for="url">目标网址</label>
-      <div class="row">
-        <input id="url" type="url" placeholder="例如 https://www.baidu.com" value="https://www.baidu.com" />
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">开源本地工具箱</p>
+      <h1>
+        任意网址<br />
+        <span class="grad">一键生成官方 b23.tv</span>
+      </h1>
+      <p class="lead">
+        包装为会员购 <code>jump.html</code> 长链，调用
+        <code>/x/share/click</code> 签发真实短链。
+        非 B 站官方产品。
+      </p>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="panel" id="tool">
+      <div class="panel-head">
+        <h2>生成短链</h2>
+        <p>输入目标网址，获取可在 B 站 App 内打开的 b23 链接。</p>
+      </div>
+
+      <label class="field-label" for="url">目标网址</label>
+      <div class="composer">
+        <input id="url" type="url" placeholder="https://www.example.com" value="https://www.baidu.com" autocomplete="url" />
         <button id="btn" type="button">生成 b23</button>
       </div>
-      <p class="hint">自动补全 https://。短链由 B 站官方服务签发。请在 <strong>B 站客户端内</strong>打开短链以测试跳转。</p>
+      <p class="hint">可省略协议，将自动补全 https://。短链由 B 站服务签发。</p>
 
       <div id="status" class="status" hidden></div>
 
       <section id="result" class="result" hidden>
-        <h2>结果</h2>
-        <div class="field">
-          <span>b23 短链</span>
-          <div class="copy-row">
-            <a id="short" href="#" target="_blank" rel="noopener"></a>
-            <button type="button" class="ghost" data-copy="short">复制</button>
+        <div class="result-title">结果</div>
+        <div class="kv">
+          <div class="kv-label">b23 短链</div>
+          <div class="kv-row">
+            <a id="short" class="kv-value link" href="#" target="_blank" rel="noopener"></a>
+            <button type="button" class="btn-soft" data-copy="short">复制</button>
           </div>
         </div>
-        <div class="field">
-          <span>包装长链（登记进 b23 的内容）</span>
-          <div class="copy-row">
-            <code id="long"></code>
-            <button type="button" class="ghost" data-copy="long">复制</button>
+        <div class="kv">
+          <div class="kv-label">包装长链</div>
+          <div class="kv-row">
+            <code id="long" class="kv-value mono"></code>
+            <button type="button" class="btn-soft" data-copy="long">复制</button>
           </div>
         </div>
-        <div class="field">
-          <span>b23 → Location（探测）</span>
-          <code id="loc"></code>
+        <div class="kv">
+          <div class="kv-label">Location 探测</div>
+          <code id="loc" class="kv-value mono"></code>
         </div>
         <p id="note" class="note"></p>
       </section>
-    </main>
-
-    <section class="card flow">
-      <h2>链路</h2>
-      <ol>
-        <li>目标 <code>T</code> → <code>bilibili://mall/web?url=T</code></li>
-        <li><code>d.bilibili.com/?schema=...</code></li>
-        <li><code>mall.bilibili.com/jump.html?Url=...</code></li>
-        <li><code>POST /x/share/click</code> · <code>public.webview.0.0.pv</code></li>
-        <li>官方 <code>b23.tv/xxxxx</code></li>
-        <li><strong>在 B 站 App 内打开</strong>短链 → 才可能到达 <code>T</code></li>
-      </ol>
     </section>
 
-    <footer>b23wrap · MIT · <code>127.0.0.1:8765</code> · 见 DISCLAIMER.md</footer>
-  </div>
+    <section class="callout" id="notice">
+      <div class="callout-icon" aria-hidden="true">i</div>
+      <div>
+        <h3>跳转说明（重要）</h3>
+        <p>
+          生成的 <code>b23.tv</code> <strong>只有在 B 站 App 里面点开</strong>，才可能跳到你填的网站。
+          系统浏览器 / 电脑 Chrome 打开时，一般只会停在官方中转页（如 <code>d.bilibili.com</code>），
+          <strong>不会</strong>自动进入目标站。
+        </p>
+        <p class="callout-sub">
+          使用前请阅读仓库 <strong>DISCLAIMER.md</strong>。请遵守法律与平台规则。
+        </p>
+      </div>
+    </section>
+
+    <section class="features" id="how">
+      <article class="feature">
+        <div class="feature-num">01</div>
+        <h3>包装长链</h3>
+        <p>目标 <code>T</code> → <code>bilibili://mall/web?url=T</code> → <code>jump.html</code></p>
+      </article>
+      <article class="feature">
+        <div class="feature-num">02</div>
+        <h3>官方签发</h3>
+        <p><code>POST /x/share/click</code> · <code>public.webview.0.0.pv</code></p>
+      </article>
+      <article class="feature">
+        <div class="feature-num">03</div>
+        <h3>App 内打开</h3>
+        <p>在 <strong>B 站客户端</strong> 打开短链，才可能到达目标站</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>b23wrap</span>
+      <span class="dot">·</span>
+      <span>GPL-3.0</span>
+      <span class="dot">·</span>
+      <span>DISCLAIMER.md</span>
+      <span class="dot">·</span>
+      <span><code>127.0.0.1:8765</code></span>
+    </div>
+  </footer>
+
   <script src="/static/app.js"></script>
 </body>
 </html>

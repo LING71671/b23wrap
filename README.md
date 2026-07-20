@@ -1,6 +1,6 @@
 # b23wrap
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-green.svg)](https://www.python.org/downloads/)
 
 **开源本地工具箱**：将任意 `http(s)` URL 包装为 B 站会员购 `jump.html` 长链，并调用公开分享接口签发官方 **`b23.tv`** 短链。
@@ -93,7 +93,7 @@ b23wrap/
 │   └── cli.py            # 命令行入口
 ├── docs/
 │   └── mechanism.md      # 机制说明
-├── LICENSE               # MIT
+├── LICENSE               # GPL-3.0
 ├── DISCLAIMER.md         # 免责声明（必读）
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -148,6 +148,6 @@ b23wrap/
 
 ## License
 
-[MIT](./LICENSE) © b23wrap contributors  
+[GPL-3.0](./LICENSE) © b23wrap contributors  
 
 第三方商标（哔哩哔哩 / bilibili / b23.tv 等）归其权利人所有。
