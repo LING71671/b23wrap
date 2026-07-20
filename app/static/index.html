@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
   <title>b23wrap</title>
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="favicon-16.png" sizes="16x16" />
   <link rel="apple-touch-icon" href="favicon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
   <nav class="nav">
@@ -29,35 +30,36 @@
 
   <main class="main" id="tool">
     <div class="cards">
+      <!-- 最左：链路（四大块） -->
+      <article class="card chain-card">
+        <h2 data-i18n="chainTitle">链路</h2>
+        <p class="muted" data-i18n="chainDesc">选择已验证包装路径（App 终判）。</p>
+        <div class="chain-grid" id="chainPills" role="radiogroup" aria-label="chain">
+          <button type="button" class="chain-tile is-active" data-chain="c1" role="radio" aria-checked="true">
+            <span class="chain-id">C1</span>
+            <span class="chain-name" data-i18n="chainC1s">标准三层</span>
+          </button>
+          <button type="button" class="chain-tile" data-chain="c2" role="radio" aria-checked="false">
+            <span class="chain-id">C2</span>
+            <span class="chain-name" data-i18n="chainC2s">备用域名</span>
+          </button>
+          <button type="button" class="chain-tile" data-chain="c4" role="radio" aria-checked="false">
+            <span class="chain-id">C4</span>
+            <span class="chain-name" data-i18n="chainC4s">双层嵌套</span>
+          </button>
+          <button type="button" class="chain-tile" data-chain="c5" role="radio" aria-checked="false">
+            <span class="chain-id">C5</span>
+            <span class="chain-name" data-i18n="chainC5s">jump 套 jump</span>
+          </button>
+        </div>
+        <input type="hidden" id="chain" value="c1" />
+      </article>
+
+      <!-- 生成 -->
       <article class="card input-card">
         <h2 data-i18n="genTitle">生成</h2>
-        <p class="muted" data-i18n="genDesc">包装网址，签发官方 b23 短链。可选已验证链路 C1–C5。</p>
+        <p class="muted" data-i18n="genDesc">包装网址，签发官方 b23 短链。</p>
         <input id="url" type="url" data-i18n-placeholder="urlPh" placeholder="https://www.example.com" value="" />
-
-        <div class="chain-block">
-          <div class="field-label" data-i18n="chainLabel">链路（App 已验证）</div>
-          <div class="chain-pills" id="chainPills" role="radiogroup" aria-label="chain">
-            <button type="button" class="chain-pill is-active" data-chain="c1" role="radio" aria-checked="true">
-              <strong>C1</strong>
-              <span data-i18n="chainC1s">标准三层</span>
-            </button>
-            <button type="button" class="chain-pill" data-chain="c2" role="radio" aria-checked="false">
-              <strong>C2</strong>
-              <span data-i18n="chainC2s">备用域名</span>
-            </button>
-            <button type="button" class="chain-pill" data-chain="c4" role="radio" aria-checked="false">
-              <strong>C4</strong>
-              <span data-i18n="chainC4s">双层嵌套</span>
-            </button>
-            <button type="button" class="chain-pill" data-chain="c5" role="radio" aria-checked="false">
-              <strong>C5</strong>
-              <span data-i18n="chainC5s">jump 套 jump</span>
-            </button>
-          </div>
-          <input type="hidden" id="chain" value="c1" />
-          <p class="hint muted" data-i18n="chainHint">C1 默认；C2 换签发接口；C4/C5 多层包装。Pages 上可能仅能出长链（跨域）。</p>
-        </div>
-
         <button id="btn" type="button" data-i18n="genBtn">生成</button>
         <div id="status" class="status" hidden></div>
         <div id="result" class="result" hidden>
@@ -104,6 +106,6 @@
     <span class="dot">·</span>
     <span data-i18n="footer">b23wrap · 本地 / Pages</span>
   </footer>
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

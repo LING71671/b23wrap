@@ -150,7 +150,7 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
   color: var(--ink);
 }
 
-/* 3-column cards like product grid */
+/* 4-column cards: 链路 | 生成 | App | 免责 */
 .main {
   margin: 0 40px 48px;
   border-left: 1px solid var(--line);
@@ -160,8 +160,8 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
 
 .cards {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
-  min-height: 280px;
+  grid-template-columns: 1.15fr 1.35fr 1fr 1fr;
+  min-height: 320px;
 }
 
 .card {
@@ -173,6 +173,68 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
 }
 
 .card:last-child { border-right: 0; }
+
+/* 链路大卡片 */
+.chain-card {
+  background:
+    radial-gradient(420px 220px at 20% 100%, rgba(38, 37, 30, 0.05), transparent 55%),
+    #f6f3ef;
+}
+
+.chain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+  min-height: 200px;
+}
+
+.chain-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 88px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.chain-tile .chain-id {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.chain-tile .chain-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.35;
+  margin-top: 8px;
+}
+
+.chain-tile:hover {
+  border-color: var(--ink);
+}
+
+.chain-tile.is-active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.chain-tile.is-active .chain-id,
+.chain-tile.is-active .chain-name {
+  color: #fff;
+}
 
 .card h2 {
   margin: 0 0 10px;
@@ -211,78 +273,6 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
 
 .input-card input:focus {
   border-color: var(--ink);
-}
-
-.field-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin: 4px 0 8px;
-  letter-spacing: 0.02em;
-}
-
-.chain-block {
-  margin: 4px 0 16px;
-  padding: 12px 12px 8px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.65);
-}
-
-.chain-pills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.chain-pill {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-height: 52px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--text);
-  cursor: pointer;
-  text-align: left;
-  font-size: 0.78rem;
-  line-height: 1.3;
-}
-
-.chain-pill strong {
-  font-size: 0.9rem;
-  color: var(--ink);
-  letter-spacing: 0.02em;
-}
-
-.chain-pill:hover {
-  border-color: var(--ink);
-}
-
-.chain-pill.is-active {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fff;
-}
-
-.chain-pill.is-active strong {
-  color: #fff;
-}
-
-.input-card .hint {
-  margin: 0 0 4px;
-  font-size: 0.75rem;
-  max-width: none;
-  line-height: 1.4;
-}
-
-@media (max-width: 520px) {
-  .chain-pills {
-    grid-template-columns: 1fr;
-  }
 }
 
 .input-card button#btn {
@@ -373,6 +363,10 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
   font-size: 0.8rem;
 }
 
+@media (max-width: 1100px) {
+  .cards { grid-template-columns: 1fr 1fr; }
+}
+
 @media (max-width: 900px) {
   .nav { padding: 0 20px; }
   .hero, .main { margin-left: 16px; margin-right: 16px; }
@@ -380,4 +374,5 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
   .card { border-right: 0; border-bottom: 1px solid var(--line); }
   .card:last-child { border-bottom: 0; }
   .muted { max-width: none; }
+  .chain-grid { min-height: 180px; }
 }
