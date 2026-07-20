@@ -1,5 +1,4 @@
 const $ = (id) => document.getElementById(id);
-
 const urlInput = $("url");
 const btn = $("btn");
 const statusEl = $("status");
@@ -14,12 +13,12 @@ function setStatus(kind, text) {
 async function generate() {
   const url = urlInput.value.trim();
   if (!url) {
-    setStatus("error", "请先填写目标网址");
+    setStatus("error", "URL required");
     return;
   }
   btn.disabled = true;
   resultEl.hidden = true;
-  setStatus("loading", "正在包装长链并请求 B 站签发 b23…");
+  setStatus("loading", "Working…");
 
   try {
     const res = await fetch("/api/generate", {
@@ -29,22 +28,17 @@ async function generate() {
     });
     const data = await res.json();
     if (!data.ok) {
-      setStatus("error", data.error || "生成失败");
+      setStatus("error", data.error || "Failed");
       return;
     }
-
     $("short").textContent = data.short_url;
     $("short").href = data.short_url;
     $("long").textContent = data.long_url;
-    $("loc").textContent = data.location || "(未取到 Location)";
-    $("note").textContent = data.note || "";
+    $("loc").textContent = data.location || "";
     resultEl.hidden = false;
-    setStatus(
-      "ok",
-      "生成成功。请在 B 站 App 内打开短链才会跳到目标站；浏览器里一般不会跳转。"
-    );
+    setStatus("ok", "Done · open b23 in Bilibili app");
   } catch (e) {
-    setStatus("error", "请求失败：" + e);
+    setStatus("error", String(e));
   } finally {
     btn.disabled = false;
   }
@@ -57,16 +51,15 @@ urlInput.addEventListener("keydown", (e) => {
 
 document.querySelectorAll("[data-copy]").forEach((el) => {
   el.addEventListener("click", async () => {
-    const id = el.getAttribute("data-copy");
-    const node = $(id);
+    const node = $(el.getAttribute("data-copy"));
     const text = node.href && node.tagName === "A" ? node.href : node.textContent;
     try {
       await navigator.clipboard.writeText(text);
-      el.textContent = "已复制";
-      setTimeout(() => (el.textContent = "复制"), 1200);
+      el.textContent = "OK";
+      setTimeout(() => (el.textContent = "Copy"), 900);
     } catch {
-      el.textContent = "失败";
-      setTimeout(() => (el.textContent = "复制"), 1200);
+      el.textContent = "Err";
+      setTimeout(() => (el.textContent = "Copy"), 900);
     }
   });
 });
