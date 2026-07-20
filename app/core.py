@@ -140,7 +140,7 @@ def generate(target: str) -> dict:
         "note": (
             "b23 由 B 站短链服务签发。"
             "桌面浏览器常停在 d.bilibili.com；"
-            "真机 B 站 App 打开才可能执行 mall/web 出站。"
+            "真机 B 站 App 是否打开目标页取决于客户端策略。"
         ),
         "lab_only": True,
     }

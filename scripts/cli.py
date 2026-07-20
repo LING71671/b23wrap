@@ -15,7 +15,7 @@ from core import build_jump_long_url, generate  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="web2bilibili CLI")
+    ap = argparse.ArgumentParser(description="web2b-short CLI")
     ap.add_argument("url", help="Target http(s) URL")
     ap.add_argument(
         "--long-only",
