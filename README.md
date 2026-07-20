@@ -36,6 +36,15 @@
 
 ---
 
+## 仓库
+
+https://github.com/LING71671/b23wrap
+
+```bash
+git clone https://github.com/LING71671/b23wrap.git
+cd b23wrap
+```
+
 ## 快速开始
 
 ### 环境
@@ -46,12 +55,8 @@
 ### Web 工具箱
 
 ```bash
-# Windows
-cd B:\b23wrap
 python app/server.py
-
-# 或
-start.bat
+# Windows 也可: start.bat
 ```
 
 浏览器打开：<http://127.0.0.1:8765/>

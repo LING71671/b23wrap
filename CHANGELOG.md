@@ -16,4 +16,4 @@
 - 前端：MIMO 风格浅色产品页 UI
 - 许可证：GNU GPL v3
 
-[0.1.0]: https://github.com/example/b23wrap/releases/tag/v0.1.0
+[0.1.0]: https://github.com/LING71671/b23wrap/releases/tag/v0.1.0
