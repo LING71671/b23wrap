@@ -37,6 +37,12 @@
 ---
 
 ## 仓库
+## 在线演示 (GitHub Pages)
+
+https://ling71671.github.io/b23wrap/
+
+> 纯静态部署。完整签发 b23 建议本机运行 python app/server.py（Pages 上浏览器可能跨域拦截 B 站接口，仍可生成包装长链）。
+
 
 https://github.com/LING71671/b23wrap
 
