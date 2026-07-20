@@ -5,7 +5,6 @@ const I18N = {
   zh: {
     navTool: "工具",
     heroTitle: "网址 → b23.tv",
-    heroTag: "简介",
     genTitle: "生成",
     genDesc: "包装网址，签发官方 b23 短链。",
     urlPh: "https://www.example.com",
@@ -30,7 +29,6 @@ const I18N = {
   en: {
     navTool: "Tool",
     heroTitle: "URL → b23.tv",
-    heroTag: "ABOUT",
     genTitle: "Generate",
     genDesc: "Wrap a URL, mint official b23.",
     urlPh: "https://www.example.com",
