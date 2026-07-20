@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>web2bilibili · 实验室 Demo</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="brand">web2bilibili</p>
+      <h1>任意网址 → 官方 b23.tv</h1>
+      <p class="sub">
+        包装为会员购 <code>jump.html</code> 长链，再调用 B 站
+        <code>/x/share/click</code> 签发真实短链。
+      </p>
+      <div class="banner">
+        <strong>仅限本地实验室 / 防御研究。</strong>
+        禁止钓鱼、引流、传播违规内容。桌面浏览器打开 b23 常停在官方中转页；真机 B 站 App 才可能执行出站。
+      </div>
+    </header>
+
+    <main class="card">
+      <label for="url">目标网址</label>
+      <div class="row">
+        <input id="url" type="url" placeholder="例如 https://www.baidu.com" value="https://www.baidu.com" />
+        <button id="btn" type="button">生成 b23</button>
+      </div>
+      <p class="hint">自动补全 https://。短链由 B 站官方服务签发，非本站伪造。</p>
+
+      <div id="status" class="status" hidden></div>
+
+      <section id="result" class="result" hidden>
+        <h2>结果</h2>
+        <div class="field">
+          <span>b23 短链</span>
+          <div class="copy-row">
+            <a id="short" href="#" target="_blank" rel="noopener"></a>
+            <button type="button" class="ghost" data-copy="short">复制</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>包装长链（登记进 b23 的内容）</span>
+          <div class="copy-row">
+            <code id="long"></code>
+            <button type="button" class="ghost" data-copy="long">复制</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>b23 → Location（探测）</span>
+          <code id="loc"></code>
+        </div>
+        <p id="note" class="note"></p>
+      </section>
+    </main>
+
+    <section class="card flow">
+      <h2>链路</h2>
+      <ol>
+        <li>目标 <code>T</code> → <code>bilibili://mall/web?url=T</code></li>
+        <li><code>d.bilibili.com/?schema=...</code></li>
+        <li><code>mall.bilibili.com/jump.html?Url=...</code></li>
+        <li><code>POST /x/share/click</code> · <code>public.webview.0.0.pv</code></li>
+        <li>官方 <code>b23.tv/xxxxx</code></li>
+      </ol>
+    </section>
+
+    <footer>web2bilibili · <code>127.0.0.1:8765</code> · lab only</footer>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
